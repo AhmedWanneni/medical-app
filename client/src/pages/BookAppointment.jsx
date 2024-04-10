@@ -23,7 +23,6 @@ const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
   const { user } = useSelector((state) => state.user);
 
-  console.log(user);
   const {
     register,
     handleSubmit,
@@ -42,7 +41,6 @@ const BookAppointment = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log(data);
     try {
       const response = await axios.post(
         "http://localhost:5000/api/user/book-appointment",
@@ -58,6 +56,10 @@ const BookAppointment = () => {
           },
         }
       );
+
+      
+
+      console.log(response);
       if (response.data.success) {
         toast.success(response.data.message);
       } else {

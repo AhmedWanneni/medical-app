@@ -15,6 +15,7 @@ function Profile() {
         <span>Name: {user.name}</span>
         <span>Email: {user.email}</span>
         <span>created at: {user.createdAt}</span>
+        <span>Type: {user.isDoctor ? 'doctor' : user.isAdmin ? 'admin' : 'user'}</span>
       </div>
       </div>
     </Layout>

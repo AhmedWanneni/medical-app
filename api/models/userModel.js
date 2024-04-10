@@ -15,8 +15,8 @@ const userSchema = new mongoose.Schema(
       required: false,
     },
     isDoctor: {
-      type: Boolean,
-      default: true,
+      type: String,
+      default: 'pending',
     },
     isAdmin: {
       type: Boolean,

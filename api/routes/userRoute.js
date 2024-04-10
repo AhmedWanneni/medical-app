@@ -21,15 +21,23 @@ router.post("/register", async (req, res) => {
     req.body.password = await hashPassword(req.body.password);
 
     if (req.body.userType === "isDoctor") {
-      const newUser = new User({ ...req.body, isDoctor: true, isAdmin: false });
+      const newUser = new User({
+        ...req.body,
+        isDoctor: "true",
+        isAdmin: false,
+      });
       await newUser.save();
     } else if (req.body.userType === "isAdmin") {
-      const newUser = new User({ ...req.body, isDoctor: false, isAdmin: true });
+      const newUser = new User({
+        ...req.body,
+        isDoctor: "false",
+        isAdmin: true,
+      });
       await newUser.save();
     } else {
       const newUser = new User({
         ...req.body,
-        isDoctor: false,
+        isDoctor: "false",
         isAdmin: false,
       });
       await newUser.save();
@@ -110,7 +118,7 @@ router.post("/apply-doctor-account", authMiddleware, async (req, res) => {
       _id: req.body.userId,
     });
     await user.updateOne({
-      isDoctor: true,
+      isDoctor: "pending",
     });
     // admin get notifications
     const admin = await User.findOne({
@@ -122,6 +130,8 @@ router.post("/apply-doctor-account", authMiddleware, async (req, res) => {
       content: `${newDoctor.firstName} become a doctor`,
       date: datetime.toString(),
       status: "unseen",
+      doctorId: req.body.userId,
+      accept: "pending",
     });
     await newNotification.save();
 
@@ -225,6 +235,8 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
     const notfication = new Notification({
       title: "New Appointment",
       userId: doctor.userId,
+      doctorId: doctor.userId,
+      accept: "pending",
       content: `Une nouvelle demande de rendez-vous a été faite par ${user.name}`,
       date: `${req.body.date} ${req.body.time}`,
       status: "Unseen",
@@ -363,6 +375,37 @@ router.post("/get-notifications-by-user", async (req, res) => {
       message: "Error fetching notifications",
       success: false,
       error,
+    });
+  }
+});
+
+// --------------
+router.post("/accept-appointment", authMiddleware, async (req, res) => {
+  const { notificationId, appointmentId, accept } = req.body;
+
+  const appointment = await Doctor.findOne({ appointmentId });
+  const notification = await Notification.findByIdAndDelete(notificationId);
+
+  if (accept !== true) {
+    res.status(200).send({
+      message: "appointment declined",
+      success: true,
+      data: appointment,
+    });
+    if (appointment) {
+      appointment.delete();
+    } else {
+      res.status(500).send({
+        message: "there is an error",
+        success: true,
+        data: doctor,
+      });
+    }
+  } else {
+    res.status(200).send({
+      message: "Doctor accepted",
+      success: true,
+      data: appointment,
     });
   }
 });

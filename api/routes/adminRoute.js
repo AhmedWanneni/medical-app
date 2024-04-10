@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/userModel");
 const Doctor = require("../models/doctorModel");
+const Notification = require("../models/notificationModel");
+
 const authMiddleware = require("../middlewares/authMiddleware");
+const { connect } = require("mongoose");
 
 router.get("/get-all-doctors", authMiddleware, async (req, res) => {
   try {
@@ -21,8 +24,6 @@ router.get("/get-all-doctors", authMiddleware, async (req, res) => {
     });
   }
 });
-
-
 
 router.post(
   "/change-doctor-account-status",
@@ -60,17 +61,43 @@ router.post(
   }
 );
 
-
-router.post(
-  "/delete-doctor",authMiddleware,async (req,res) => {
-      const { doctorId } = req.body;
-      const doctor = await Doctor.findByIdAndUpdate(doctorId);
-      doctor.delete();
+router.post("/delete-doctor", authMiddleware, async (req, res) => {
+  const { doctorId } = req.body;
+  const doctor = await Doctor.findByIdAndUpdate(doctorId);
+  doctor.delete();
 });
 
+router.post("/accept-doctor", authMiddleware, async (req, res) => {
+  const { notificationId, doctorId, accept } = req.body;
 
+  const user = await User.findByIdAndUpdate(doctorId, {
+    isDoctor: accept ? "accepted" : "declined",
+  });
+  const doctor = await Doctor.findOne({ doctorId });
+  const notification = await Notification.findByIdAndDelete(notificationId);
 
-
-
+  if (accept !== true) {
+    res.status(200).send({
+      message: "Doctor declined",
+      success: true,
+      data: doctor,
+    });
+    if (doctor) {
+      doctor.delete();
+    }else{
+      res.status(500).send({
+        message: "there is an error",
+        success: true,
+        data: doctor,
+      }); 
+    }
+  } else {
+    res.status(200).send({
+      message: "Doctor accepted",
+      success: true,
+      data: doctor,
+    });
+  }
+});
 
 module.exports = router;

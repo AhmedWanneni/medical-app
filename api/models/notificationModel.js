@@ -10,18 +10,26 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    doctorId: {
+      type: String,
+      required: true,
+    },
+    accept: {
+      type: String,
+      required: true,
+    },
     content: {
       type: String,
       required: true,
     },
-    status:{
-        type: String,
-        required: true,
+    status: {
+      type: String,
+      required: true,
     },
-    date:{
-        type: String,
-        required: true
-    }
+    date: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

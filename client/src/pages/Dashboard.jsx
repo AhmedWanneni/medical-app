@@ -10,7 +10,7 @@ const Dashboard = () => {
     <Layout className="bg-[#eee]">
       {user?.isAdmin ? (
         <div className=""><Notifications/></div>
-      ) : user?.isDoctor ? (
+      ) : user?.isDoctor === 'accepted' ? (
         <div className="">
           <Notifications/>
         </div>

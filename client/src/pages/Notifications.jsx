@@ -5,18 +5,22 @@ import { useSelector } from "react-redux";
 
 function Notifications() {
   const { user } = useSelector((state) => state.user);
-  const [activeTab, setActiveTab] = useState(0); 
-  const [notifications,setNotifications] = useState([]);
-
+  const [activeTab, setActiveTab] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotification, setLoadingNotification] = useState(false);
   const markAllAsSeen = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/api/user/mark-all-notifications-as-seen", {
-        userId: user._id,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await axios.post(
+        "http://localhost:5000/api/user/mark-all-notifications-as-seen",
+        {
+          userId: user._id,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       if (response.data.success) {
         toast.success(response.data.message);
       } else {
@@ -29,13 +33,17 @@ function Notifications() {
 
   const deleteAll = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/api/user/delete-all-notifications", {
-        userId: user._id,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await axios.post(
+        "http://localhost:5000/api/user/delete-all-notifications",
+        {
+          userId: user._id,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       if (response.data.success) {
         toast.success(response.data.message);
       } else {
@@ -43,6 +51,65 @@ function Notifications() {
       }
     } catch (error) {
       toast.error("Something went wrong");
+    }
+  };
+
+  const acceptAppointment = async (
+    accept,
+    appointmentId,
+    userId,
+    notificationId
+  ) => {
+    try {
+      const result = await axios.post(
+        "http://localhost:5000/api/user/accept-appointment",
+        {
+          userId,
+          appointmentId,
+          accept,
+          notificationId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (result.data.success) {
+        toast.success(result.data.message);
+        setLoadingNotification((prev) => !prev);
+      } else {
+        toast.error(result.data.message);
+      }
+    } catch (e) {
+      toast.error(result.data.message);
+    }
+  };
+
+  const acceptDoctor = async (accept, doctorId, userId, notificationId) => {
+    try {
+      const result = await axios.post(
+        "http://localhost:5000/api/admin/accept-doctor",
+        {
+          userId,
+          doctorId,
+          accept,
+          notificationId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (result.data.success) {
+        toast.success(result.data.message);
+        setLoadingNotification((prev) => !prev);
+      } else {
+        toast.error(result.data.message);
+      }
+    } catch (e) {
+      toast.error(result.data.message);
     }
   };
 
@@ -60,13 +127,15 @@ function Notifications() {
         }
       );
     } catch (e) {
-      console.log(e)
+      console.log(e);
     }
   };
 
   useEffect(() => {
-    getNotifications().then(res =>setNotifications(res.data.data)).catch(e=> console.log(e))
-  }, []);
+    getNotifications()
+      .then((res) => setNotifications(res.data.data))
+      .catch((e) => console.log(e));
+  }, [loadingNotification]);
 
   return (
     <>
@@ -113,18 +182,65 @@ function Notifications() {
           </div>
           {notifications.map((notification) => (
             <>
-            {
-              notification.status !== 'seen' &&
-            <div
-              key={notification._id}
-              className="bg-white p-4 rounded-lg shadow-md mb-4"
-            >
-              <div className="flex">
-                <div className="text-gray-700 font-bold">{notification.title}: &nbsp;</div>
-                <div className="text-gray-700">{notification.content}</div>
-              </div>
-            </div>
-            }
+              {notification.status !== "seen" && (
+                <div
+                  key={notification._id}
+                  className="bg-white p-4 rounded-lg shadow-md mb-4"
+                >
+                  <div className="w-full flex justify-between items-center">
+                    <div className="flex">
+                      <div className="text-gray-700 font-bold">
+                        {notification.title}: &nbsp;
+                      </div>
+                      <div className="text-gray-700">
+                        {notification.content}
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        className="text-white bg-green-400 p-1"
+                        onClick={() =>
+                          user.isAdmin === true
+                            ? acceptDoctor(
+                                true,
+                                notification.doctorId,
+                                notification.userId,
+                                notification._id
+                              )
+                            : acceptAppointment(
+                                true,
+                                notification.doctorId,
+                                notification.userId,
+                                notification._id
+                              )
+                        }
+                      >
+                        Accepter
+                      </button>
+                      <button
+                        className="text-white bg-red-400 p-2"
+                        onClick={() =>
+                          user.isAdmin === true
+                            ? acceptDoctor(
+                                false,
+                                notification.doctorId,
+                                notification.userId,
+                                notification._id
+                              )
+                            : acceptAppointment(
+                                false,
+                                notification.doctorId,
+                                notification.userId,
+                                notification._id
+                              )
+                        }
+                      >
+                        Refuser
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           ))}
         </div>
@@ -134,29 +250,34 @@ function Notifications() {
           <div className="flex justify-end mb-4">
             <h1
               className="text-[#00BDA9] cursor-pointer anchor"
-              onClick={() => deleteAll().then(res => console.log(res)).catch(e => console.log(e))}
+              onClick={() =>
+                deleteAll()
+                  .then((res) => console.log(res))
+                  .catch((e) => console.log(e))
+              }
             >
               Delete all
             </h1>
           </div>
-           {notifications.map((notification) => (
+          {notifications.map((notification) => (
             <>
-            {
-              notification.status === 'seen' &&
-            <div
-              key={notification._id}
-              className="bg-white p-4 rounded-lg shadow-md mb-4"
-            >
-              <div className="flex">
-                <div className="text-gray-700 font-bold">{notification.title}: &nbsp;</div>
-                <div className="text-gray-700">{notification.content}</div>
-              </div>
-            </div>
-            }
+              {notification.status === "seen" && (
+                <div
+                  key={notification._id}
+                  className="bg-white p-4 rounded-lg shadow-md mb-4"
+                >
+                  <div className="flex">
+                    <div className="text-gray-700 font-bold">
+                      {notification.title}: &nbsp;
+                    </div>
+                    <div className="text-gray-700">{notification.content}</div>
+                  </div>
+                </div>
+              )}
             </>
           ))}
         </div>
-        <Toaster/>
+        <Toaster />
       </div>
     </>
   );
