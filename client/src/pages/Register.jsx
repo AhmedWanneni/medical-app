@@ -32,7 +32,7 @@ const Register = () => {
   const onSubmit = async (data) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/user/register",
+        "https://medical-app-api.onrender.com/api/user/register",
         data
       );
       if (response.data.success) {
