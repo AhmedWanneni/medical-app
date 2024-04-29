@@ -1,9 +1,9 @@
 {
+  "homepage": "https://github.com/AhmedWanneni/medical-app/client",
   "name": "test",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": ".",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
